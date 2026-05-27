@@ -38,4 +38,12 @@ public class BankController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PostMapping()
+    public ResponseEntity<Bank> create(@RequestBody Bank newBank, UriComponentsBuilder ucb) {
+        Bank savedBank = bankRepository.save(newBank);
+        // Creation of uri to allocate the correct 201 response into header response.
+        URI location = ucb.path("/banks/{id}").buildAndExpand(savedBank.id()).toUri();
+        return ResponseEntity.created(location).body(savedBank);
+    }
 }
