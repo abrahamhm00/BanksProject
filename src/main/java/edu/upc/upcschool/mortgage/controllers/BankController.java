@@ -46,4 +46,15 @@ public class BankController {
         URI location = ucb.path("/banks/{id}").buildAndExpand(savedBank.id()).toUri();
         return ResponseEntity.created(location).body(savedBank);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Bank> update(@PathVariable Integer id, @RequestBody Bank bank) {
+        if (bankRepository.existsById(id)) {
+            Bank bankToSave = new Bank(id, bank.name(), bank.bank_code(), bank.url());
+            Bank updatedBank = bankRepository.save(bankToSave);
+            return ResponseEntity.ok(updatedBank);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
