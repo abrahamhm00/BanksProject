@@ -2,5 +2,5 @@ INSERT INTO bank (name, bank_code, url) VALUES ('Caixabank', 'CAIX ES BB XXX', '
 INSERT INTO bank (name, bank_code, url) VALUES ('BBVA', 'BBVA ES MM XXX', 'https://www.bbva.es/personas.html');
 INSERT INTO bank (name, bank_code, url) VALUES ('Sabadell', 'BSAB ES BB XXX', 'https://www.bancsabadell.com/bsnacional/es/particulares/');
 INSERT INTO bank (name, bank_code, url) VALUES ('Santander', 'BSCH ES MM XXX', 'https://www.bancosantander.es/particulares');
-INSERT INTO bank (name, bank_code, url) VALUES ('Kutxabank', 'CECA ES M2 XXX', 'https://portal.kutxabank.es/cs/Satellite/kb/es/particulares?c=Page&cid=1298547039252&d=Touch&hizkuntza=es&localizador=1298547039252%3B&pagename=PortalBBK%2FPortalKutxabank%2FPage%2FPK_Home&sitio=PortalBBK%2FPortalKutxabank');
+INSERT INTO bank (name, bank_code, url) VALUES ('Kutxabank', 'CECA ES M2 XXX', 'https://portal.kutxabank.es/cs/Satellite/kb/es/particulares?c=Page&cid=1298547039252&d=Touch&hizkuntza=es&localizador=1298547039252%3B&pagename=PortalBBK%2FPortalKutxabank%2FPage%2FPK_Home&sitio=PortalBBK%2FPortalKutxabankcleaer');
 
