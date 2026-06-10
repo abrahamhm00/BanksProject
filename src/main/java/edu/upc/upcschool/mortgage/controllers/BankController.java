@@ -57,4 +57,15 @@ public class BankController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        Optional<Bank> bankRepositoryOptional = bankRepository.findById(id);
+        if (bankRepositoryOptional.isPresent()) {
+            bankRepository.delete(bankRepositoryOptional.get());
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
