@@ -16,7 +16,7 @@ import static org.springframework.http.ResponseEntity.ok;
 @RequestMapping({ "/banks/{bankId}/mortgages" })
 public class MortgageController {
 
-    private final MortgageRepository mortageRepository;
+    private final MortgageRepository mortgageRepository;
     private final BankRepository bankRepository;
 
     /**
@@ -26,7 +26,7 @@ public class MortgageController {
      */
     public MortgageController(MortgageRepository mortgageRepository,
             BankRepository bankRepository) {
-        this.mortageRepository = mortgageRepository;
+        this.mortgageRepository = mortgageRepository;
         this.bankRepository = bankRepository;
     }
 
@@ -35,7 +35,18 @@ public class MortgageController {
         if (!bankRepository.existsById(bankId)) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(mortageRepository.findByBankId(bankId));
+        return ResponseEntity.ok(mortgageRepository.findByBankId(bankId));
+    }
+
+    @GetMapping
+    public ResponseEntity<Mortgage> findById(@PathVariable Integer bankId,
+            @PathVariable Integer id) {
+        if (!bankRepository.existsById(bankId)) {
+            return ResponseEntity.notFound().build();
+        }
+        return mortgageRepository.findByIdAndBankId(bankId, id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
 }
