@@ -38,13 +38,13 @@ public class MortgageController {
         return ResponseEntity.ok(mortgageRepository.findByBankId(bankId));
     }
 
-    @GetMapping
+    @GetMapping("/{id}")
     public ResponseEntity<Mortgage> findById(@PathVariable Integer bankId,
             @PathVariable Integer id) {
         if (!bankRepository.existsById(bankId)) {
             return ResponseEntity.notFound().build();
         }
-        return mortgageRepository.findByIdAndBankId(bankId, id)
+        return mortgageRepository.findByIdAndBankId(id, bankId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
