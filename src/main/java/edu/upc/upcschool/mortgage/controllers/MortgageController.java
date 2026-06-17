@@ -49,4 +49,34 @@ public class MortgageController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping
+    public ResponseEntity<Mortgage> create(@PathVariable Integer bankId,
+                                            @RequestBody Mortgage newMortgage,
+                                            UriComponentsBuilder ucb){
+                                
+        if (!bankRepository.existsById(bankId)) {
+            return ResponseEntity.notFound().build();          
+        }
+        Mortgage toSave = new Mortgage(null, bankId, newMortgage.name(), newMortgage.type(), newMortgage.description(), newMortgage.TAE());        
+        Mortgage saved = mortgageRepository.save(toSave);
+
+        URI location = ucb
+                        .path("/banks/{bankId}/mortgages")
+                        .buildAndExpand(bankId)
+                        .toUri();
+        return ResponseEntity.created(location).body(saved);    
+    }           
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Mortgage> update(@PathVariable Integer bankId
+                                            @PathVariable Integer id,
+                                            @RequestBody updateMortgage){
+        if(!bankRepository.existsById(bankId)){
+            return ResponseEntity.notFound().build();
+        }
+        if(!mortgageRepository.existsByIdAndBankId(id)){
+            return ResponseEntity.notFound().build();
+        }
+         
+    }
 }
