@@ -79,4 +79,14 @@ public class MortgageController {
                 updateMortgage.description(), updateMortgage.TAE());
         return ResponseEntity.ok(mortgageRepository.save(toSave));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Mortgage> delete(@PathVariable Integer bankId,
+            @PathVariable Integer id) {
+        if (!mortgageRepository.existsByIdAndBankId(id, bankId)) {
+            return ResponseEntity.notFound().build();
+        }
+        mortgageRepository.deleteByIdAndBankId(id, bankId);
+        return ResponseEntity.noContent().build();
+    }
 }
