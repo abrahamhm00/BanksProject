@@ -20,11 +20,29 @@ paths:
           format: int32
       responses:
         "200":
-          description: OK
+          description: Banco encontrado con éxito.
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/Bank"
+        "400":
+          description: Petición incorrecta (ID no válido).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Banco no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     put:
       tags:
       - bank-controller
@@ -44,11 +62,29 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: Banco actualizado con éxito.
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/Bank"
+        "400":
+          description: Datos de entrada no válidos o JSON incorrecto.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Banco no encontrado para actualizar.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       tags:
       - bank-controller
@@ -61,49 +97,252 @@ paths:
           type: integer
           format: int32
       responses:
-        "200":
-          description: OK
-  /banks/:
+        "204":
+          description: Banco eliminado con éxito (sin contenido de respuesta).
+        "404":
+          description: Banco no encontrado para eliminar.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /banks/{bankId}/mortgages/{id}:
     get:
       tags:
-      - bank-controller
-      operationId: findAll
+      - mortgage-controller
+      operationId: findById_1
+      parameters:
+      - name: bankId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
       responses:
         "200":
-          description: OK
+          description: Hipoteca encontrada con éxito.
           content:
-            '*/*':
+            application/json:
               schema:
-                type: object
-    post:
+                $ref: "#/components/schemas/Mortgage"
+        "400":
+          description: Parámetros de ruta no válidos.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Banco o hipoteca no encontrados.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
       tags:
-      - bank-controller
-      operationId: create
+      - mortgage-controller
+      operationId: update_1
+      parameters:
+      - name: bankId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Bank"
+              $ref: "#/components/schemas/Mortgage"
         required: true
       responses:
         "200":
-          description: OK
+          description: Hipoteca actualizada con éxito.
           content:
-            '*/*':
+            application/json:
               schema:
-                $ref: "#/components/schemas/Bank"
-  /banks:
+                $ref: "#/components/schemas/Mortgage"
+        "400":
+          description: Datos de entrada no válidos o JSON incorrecto.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Banco o hipoteca no encontrados para actualizar.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags:
+      - mortgage-controller
+      operationId: delete_1
+      parameters:
+      - name: bankId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "204":
+          description: Hipoteca eliminada con éxito (sin contenido de respuesta).
+        "404":
+          description: Banco o hipoteca no encontrados para eliminar.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /banks/{bankId}/mortgages:
+    get:
+      tags:
+      - mortgage-controller
+      operationId: findAll
+      parameters:
+      - name: bankId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Lista de hipotecas del banco recuperada con éxito.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Mortgage"
+        "400":
+          description: Parámetro de ruta bankId no válido.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Banco no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+      - mortgage-controller
+      operationId: create
+      parameters:
+      - name: bankId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Mortgage"
+        required: true
+      responses:
+        "201":
+          description: Hipoteca creada con éxito.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URI de la hipoteca recién creada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Mortgage"
+        "400":
+          description: Datos de entrada no válidos o JSON incorrecto.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Banco no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /banks/:
     get:
       tags:
       - bank-controller
       operationId: findAll_1
       responses:
         "200":
-          description: OK
+          description: Lista de bancos recuperada con éxito.
           content:
-            '*/*':
+            application/json:
               schema:
-                type: object
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bank"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     post:
       tags:
       - bank-controller
@@ -115,12 +354,85 @@ paths:
               $ref: "#/components/schemas/Bank"
         required: true
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Banco creado con éxito.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URI del banco recién creado.
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/Bank"
+        "400":
+          description: Datos de entrada no válidos o JSON incorrecto.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /banks:
+    get:
+      tags:
+      - bank-controller
+      operationId: findAll_2
+      responses:
+        "200":
+          description: Lista de bancos recuperada con éxito.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bank"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+      - bank-controller
+      operationId: create_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Bank"
+        required: true
+      responses:
+        "201":
+          description: Banco creado con éxito.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URI del banco recién creado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bank"
+        "400":
+          description: Datos de entrada no válidos o JSON incorrecto.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     Bank:
@@ -135,3 +447,39 @@ components:
           type: string
         url:
           type: string
+    Mortgage:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        bankId:
+          type: integer
+          format: int32
+        name:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        TAE:
+          type: number
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Fecha y hora en la que ocurrió el error.
+        status:
+          type: integer
+          description: Código de estado HTTP del error.
+        error:
+          type: string
+          description: Nombre descriptivo del error.
+        message:
+          type: string
+          description: Detalle del mensaje de error.
+        path:
+          type: string
+          description: URI donde ocurrió el error.
