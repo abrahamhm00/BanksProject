@@ -51,32 +51,32 @@ public class MortgageController {
 
     @PostMapping
     public ResponseEntity<Mortgage> create(@PathVariable Integer bankId,
-                                            @RequestBody Mortgage newMortgage,
-                                            UriComponentsBuilder ucb){
-                                
+            @RequestBody Mortgage newMortgage,
+            UriComponentsBuilder ucb) {
+
         if (!bankRepository.existsById(bankId)) {
-            return ResponseEntity.notFound().build();          
+            return ResponseEntity.notFound().build();
         }
-        Mortgage toSave = new Mortgage(null, bankId, newMortgage.name(), newMortgage.type(), newMortgage.description(), newMortgage.TAE());        
+        Mortgage toSave = new Mortgage(null, bankId, newMortgage.name(), newMortgage.type(), newMortgage.description(),
+                newMortgage.TAE());
         Mortgage saved = mortgageRepository.save(toSave);
 
         URI location = ucb
-                        .path("/banks/{bankId}/mortgages")
-                        .buildAndExpand(bankId)
-                        .toUri();
-        return ResponseEntity.created(location).body(saved);    
-    }           
+                .path("/banks/{bankId}/mortgages")
+                .buildAndExpand(bankId)
+                .toUri();
+        return ResponseEntity.created(location).body(saved);
+    }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Mortgage> update(@PathVariable Integer bankId
-                                            @PathVariable Integer id,
-                                            @RequestBody updateMortgage){
-        if(!bankRepository.existsById(bankId)){
+    public ResponseEntity<Mortgage> update(@PathVariable Integer bankId,
+            @PathVariable Integer id,
+            @RequestBody Mortgage updateMortgage) {
+        if (!mortgageRepository.existsByIdAndBankId(id, bankId)) {
             return ResponseEntity.notFound().build();
         }
-        if(!mortgageRepository.existsByIdAndBankId(id)){
-            return ResponseEntity.notFound().build();
-        }
-         
+        Mortgage toSave = new Mortgage(id, bankId, updateMortgage.name(), updateMortgage.type(),
+                updateMortgage.description(), updateMortgage.TAE());
+        return ResponseEntity.ok(mortgageRepository.save(toSave));
     }
 }
