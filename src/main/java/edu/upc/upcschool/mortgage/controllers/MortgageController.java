@@ -3,6 +3,7 @@ package edu.upc.upcschool.mortgage.controllers;
 import edu.upc.upcschool.mortgage.models.Mortgage;
 import edu.upc.upcschool.mortgage.repositories.BankRepository;
 import edu.upc.upcschool.mortgage.repositories.MortgageRepository;
+import edu.upc.upcschool.mortgage.services.MortgageSimulationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,9 +26,11 @@ public class MortgageController {
      * before creation at execution.
      */
     public MortgageController(MortgageRepository mortgageRepository,
-            BankRepository bankRepository) {
+            BankRepository bankRepository,
+            MortgageSimulationService mortgageSimulationService) {
         this.mortgageRepository = mortgageRepository;
         this.bankRepository = bankRepository;
+        this.mortgageSimulationService = mortgageSimulationService;
     }
 
     @GetMapping
@@ -88,5 +91,17 @@ public class MortgageController {
         }
         mortgageRepository.deleteByIdAndBankId(id, bankId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/simulate")
+    public ResponseEntity<Mortgage> simulate(@PathVariable Integer bankId,
+             @PathVariable Integer id,
+             @RequestParam double principal,
+             @RequestParam int years){
+        
+        if(!mortgageRepository.existsByIdAndBankId(id, bankId)){
+            return ResponseEntity.notFound().build();
+        }
+        double cuota = mortgageSimulationService.
     }
 }
