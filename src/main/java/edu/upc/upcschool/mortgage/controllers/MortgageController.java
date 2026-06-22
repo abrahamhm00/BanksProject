@@ -19,7 +19,7 @@ public class MortgageController {
 
     private final MortgageRepository mortgageRepository;
     private final BankRepository bankRepository;
-
+    private final MortgageSimulationService mortgageSimulationService;
     /**
      * Initializing Mortgage Controller via class Constructor, preventing null
      * access
@@ -93,15 +93,21 @@ public class MortgageController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{id}/simulate")
-    public ResponseEntity<Mortgage> simulate(@PathVariable Integer bankId,
-             @PathVariable Integer id,
-             @RequestParam double principal,
-             @RequestParam int years){
-        
-        if(!mortgageRepository.existsByIdAndBankId(id, bankId)){
+     @GetMapping("/{id}/simulate")
+    public ResponseEntity<?> simulate(@PathVariable Integer bankId,
+                                      @PathVariable Integer id,
+                                      @RequestParam double principal,
+                                      @RequestParam int years){
+
+        try{
+            double fee = mortgageSimulationService.simulate(bankId, id, principal, years);
+            return ResponseEntity.ok(fee);
+        } catch (java.util.NoSuchElementException e){
             return ResponseEntity.notFound().build();
+        } catch (java.lang.IllegalArgumentException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.internalServerError().body("An error ocurred: " + e.getMessage());
         }
-        double cuota = mortgageSimulationService.
     }
 }
