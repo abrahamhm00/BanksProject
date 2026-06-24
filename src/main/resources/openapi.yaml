@@ -1,60 +1,115 @@
 openapi: 3.1.0
 info:
-  title: OpenAPI definition
-  version: v0
+  title: Mortgage Application API
+  description: Complete API for managing banking institutions and their associated mortgage products, including a simulation engine to calculate mortgage fees.
+  version: v1.0.0
 servers:
-- url: http://localhost:8080
-  description: Generated server url
+  - url: http://localhost:8080
+    description: Local development server
+tags:
+  - name: bank-controller
+    description: Operations related to creating, retrieving, updating, and deleting Banks.
+  - name: mortgage-controller
+    description: Operations related to managing Mortgages and running financial Simulations.
 paths:
-  /banks/{id}:
+  /banks:
     get:
       tags:
-      - bank-controller
-      operationId: findById
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
+        - bank-controller
+      summary: Retrieve all banks
+      description: Fetches a complete list of all registered banks in the system.
+      operationId: findAllBanks
       responses:
         "200":
-          description: Banco encontrado con éxito.
+          description: Successfully retrieved the list of banks.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bank"
+    post:
+      tags:
+        - bank-controller
+      summary: Create a new bank
+      description: Registers a new bank entry in the system with the provided details.
+      operationId: createBank
+      requestBody:
+        description: Bank object payload containing necessary details for creation.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Bank"
+        required: true
+      responses:
+        "201":
+          description: Bank created successfully. Returns the created object and its location URI.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URI of the newly created bank.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Bank"
         "400":
-          description: Petición incorrecta (ID no válido).
+          description: Bad Request. Invalid input data or malformed JSON.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /banks/{id}:
+    get:
+      tags:
+        - bank-controller
+      summary: Get bank by ID
+      description: Retrieves the detailed information of a specific bank using its unique identifier.
+      operationId: findBankById
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the bank.
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Bank found and successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bank"
+        "400":
+          description: Bad request. The provided ID parameter is invalid.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
-          description: Banco no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Error interno del servidor.
+          description: Not Found. The bank with the specified ID does not exist.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     put:
       tags:
-      - bank-controller
-      operationId: update
+        - bank-controller
+      summary: Update an existing bank
+      description: Updates the properties of an existing bank based on the provided ID.
+      operationId: updateBank
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
+        - name: id
+          in: path
+          description: Unique identifier of the bank to update.
+          required: true
+          schema:
+            type: integer
+            format: int32
       requestBody:
+        description: Updated bank object payload.
         content:
           application/json:
             schema:
@@ -62,175 +117,42 @@ paths:
         required: true
       responses:
         "200":
-          description: Banco actualizado con éxito.
+          description: Bank successfully updated.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Bank"
         "400":
-          description: Datos de entrada no válidos o JSON incorrecto.
+          description: Bad Request. Invalid input data or malformed JSON.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
-          description: Banco no encontrado para actualizar.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Error interno del servidor.
+          description: Not Found. Bank not found to update.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     delete:
       tags:
-      - bank-controller
-      operationId: delete
+        - bank-controller
+      summary: Delete a bank
+      description: Removes a specific bank from the system by its ID.
+      operationId: deleteBank
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
+        - name: id
+          in: path
+          description: Unique identifier of the bank to delete.
+          required: true
+          schema:
+            type: integer
+            format: int32
       responses:
         "204":
-          description: Banco eliminado con éxito (sin contenido de respuesta).
+          description: Bank successfully deleted. No content is returned.
         "404":
-          description: Banco no encontrado para eliminar.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Error interno del servidor.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /banks/{bankId}/mortgages/{id}:
-    get:
-      tags:
-      - mortgage-controller
-      operationId: findById_1
-      parameters:
-      - name: bankId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
-      responses:
-        "200":
-          description: Hipoteca encontrada con éxito.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Mortgage"
-        "400":
-          description: Parámetros de ruta no válidos.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: Banco o hipoteca no encontrados.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Error interno del servidor.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    put:
-      tags:
-      - mortgage-controller
-      operationId: update_1
-      parameters:
-      - name: bankId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Mortgage"
-        required: true
-      responses:
-        "200":
-          description: Hipoteca actualizada con éxito.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Mortgage"
-        "400":
-          description: Datos de entrada no válidos o JSON incorrecto.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: Banco o hipoteca no encontrados para actualizar.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Error interno del servidor.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    delete:
-      tags:
-      - mortgage-controller
-      operationId: delete_1
-      parameters:
-      - name: bankId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
-      responses:
-        "204":
-          description: Hipoteca eliminada con éxito (sin contenido de respuesta).
-        "404":
-          description: Banco o hipoteca no encontrados para eliminar.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Error interno del servidor.
+          description: Not Found. Bank not found to delete.
           content:
             application/json:
               schema:
@@ -239,18 +161,21 @@ paths:
   /banks/{bankId}/mortgages:
     get:
       tags:
-      - mortgage-controller
-      operationId: findAll
+        - mortgage-controller
+      summary: Get all mortgages for a bank
+      description: Retrieves a comprehensive list of all mortgages associated with a specific bank.
+      operationId: findAllMortgagesByBank
       parameters:
-      - name: bankId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
+        - name: bankId
+          in: path
+          description: Unique identifier of the bank.
+          required: true
+          schema:
+            type: integer
+            format: int32
       responses:
         "200":
-          description: Lista de hipotecas del banco recuperada con éxito.
+          description: Successfully retrieved the list of mortgages for the bank.
           content:
             application/json:
               schema:
@@ -258,35 +183,33 @@ paths:
                 items:
                   $ref: "#/components/schemas/Mortgage"
         "400":
-          description: Parámetro de ruta bankId no válido.
+          description: Bad Request. Invalid bank ID supplied.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
-          description: Banco no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Error interno del servidor.
+          description: Not Found. The specified bank does not exist.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     post:
       tags:
-      - mortgage-controller
-      operationId: create
+        - mortgage-controller
+      summary: Create a new mortgage for a bank
+      description: Adds a new mortgage product associated with the specified bank.
+      operationId: createMortgage
       parameters:
-      - name: bankId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
+        - name: bankId
+          in: path
+          description: Unique identifier of the bank.
+          required: true
+          schema:
+            type: integer
+            format: int32
       requestBody:
+        description: Mortgage object payload to be created.
         content:
           application/json:
             schema:
@@ -294,192 +217,283 @@ paths:
         required: true
       responses:
         "201":
-          description: Hipoteca creada con éxito.
+          description: Mortgage created successfully. Returns the created object and its location URI.
           headers:
             Location:
               schema:
                 type: string
-              description: URI de la hipoteca recién creada.
+              description: URI of the newly created mortgage.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Mortgage"
         "400":
-          description: Datos de entrada no válidos o JSON incorrecto.
+          description: Bad Request. Invalid input data or malformed JSON.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
-          description: Banco no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Error interno del servidor.
+          description: Not Found. The specified bank does not exist.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /banks/:
+  /banks/{bankId}/mortgages/{id}:
     get:
       tags:
-      - bank-controller
-      operationId: findAll_1
+        - mortgage-controller
+      summary: Get a specific mortgage
+      description: Retrieves the details of a specific mortgage associated with a specific bank.
+      operationId: findMortgageById
+      parameters:
+        - name: bankId
+          in: path
+          description: Unique identifier of the bank.
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: id
+          in: path
+          description: Unique identifier of the mortgage.
+          required: true
+          schema:
+            type: integer
+            format: int32
       responses:
         "200":
-          description: Lista de bancos recuperada con éxito.
+          description: Mortgage found and successfully retrieved.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Bank"
-        "500":
-          description: Error interno del servidor.
+                $ref: "#/components/schemas/Mortgage"
+        "400":
+          description: Bad Request. Invalid path parameters supplied.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-    post:
+        "404":
+          description: Not Found. Bank or mortgage not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
       tags:
-      - bank-controller
-      operationId: create_1
+        - mortgage-controller
+      summary: Update a specific mortgage
+      description: Updates the details of an existing mortgage for a specific bank.
+      operationId: updateMortgage
+      parameters:
+        - name: bankId
+          in: path
+          description: Unique identifier of the bank.
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: id
+          in: path
+          description: Unique identifier of the mortgage to update.
+          required: true
+          schema:
+            type: integer
+            format: int32
       requestBody:
+        description: Updated mortgage object payload.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Bank"
+              $ref: "#/components/schemas/Mortgage"
         required: true
       responses:
-        "201":
-          description: Banco creado con éxito.
-          headers:
-            Location:
-              schema:
-                type: string
-              description: URI del banco recién creado.
+        "200":
+          description: Mortgage successfully updated.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Bank"
+                $ref: "#/components/schemas/Mortgage"
         "400":
-          description: Datos de entrada no válidos o JSON incorrecto.
+          description: Bad Request. Invalid input data or malformed JSON.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Error interno del servidor.
+        "404":
+          description: Not Found. Bank or mortgage not found to update.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags:
+        - mortgage-controller
+      summary: Delete a specific mortgage
+      description: Deletes a specific mortgage from a specific bank.
+      operationId: deleteMortgage
+      parameters:
+        - name: bankId
+          in: path
+          description: Unique identifier of the bank.
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: id
+          in: path
+          description: Unique identifier of the mortgage to delete.
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "204":
+          description: Mortgage successfully deleted. No content is returned.
+        "404":
+          description: Not Found. Bank or mortgage not found to delete.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /banks:
+  /banks/{bankId}/mortgages/{id}/simulate:
     get:
       tags:
-      - bank-controller
-      operationId: findAll_2
+        - mortgage-controller
+      summary: Simulate a mortgage fee
+      description: Simulates a mortgage based on the principal amount and duration in years to calculate the periodic fee.
+      operationId: simulateMortgage
+      parameters:
+        - name: bankId
+          in: path
+          description: Unique identifier of the bank.
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: id
+          in: path
+          description: Unique identifier of the mortgage.
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: principal
+          in: query
+          description: The principal amount of the mortgage loan to simulate.
+          required: true
+          schema:
+            type: number
+            format: double
+        - name: years
+          in: query
+          description: The duration of the mortgage in years.
+          required: true
+          schema:
+            type: integer
+            format: int32
       responses:
         "200":
-          description: Lista de bancos recuperada con éxito.
+          description: Simulation successful. Returns the calculated fee.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Bank"
-        "500":
-          description: Error interno del servidor.
+                type: number
+                format: double
+        "400":
+          description: Bad Request. Invalid input parameters (e.g., negative principal or years).
           content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    post:
-      tags:
-      - bank-controller
-      operationId: create_2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Bank"
-        required: true
-      responses:
-        "201":
-          description: Banco creado con éxito.
-          headers:
-            Location:
+            text/plain:
               schema:
                 type: string
-              description: URI del banco recién creado.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Bank"
-        "400":
-          description: Datos de entrada no válidos o JSON incorrecto.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not Found. Bank or mortgage not found.
         "500":
-          description: Error interno del servidor.
+          description: Internal Server Error. An unexpected error occurred during simulation.
           content:
-            application/json:
+            text/plain:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                type: string
 
 components:
   schemas:
     Bank:
       type: object
+      description: Represents a banking institution.
       properties:
         id:
           type: integer
           format: int32
+          description: Unique identifier of the bank.
+          example: 1
         name:
           type: string
+          description: Name of the bank.
+          example: "Banco Santander"
         bank_code:
           type: string
+          description: Official code of the bank.
+          example: "0049"
         url:
           type: string
+          description: Website URL of the bank.
+          example: "https://www.bancosantander.es"
     Mortgage:
       type: object
+      description: Represents a mortgage product offered by a bank.
       properties:
         id:
           type: integer
           format: int32
+          description: Unique identifier of the mortgage.
+          example: 101
         bankId:
           type: integer
           format: int32
+          description: Identifier of the bank offering this mortgage.
+          example: 1
         name:
           type: string
+          description: Name of the mortgage product.
+          example: "Hipoteca Fija"
         type:
           type: string
+          description: Type of the mortgage (e.g., Fixed, Variable).
+          example: "FIXED"
         description:
           type: string
+          description: Detailed description of the mortgage terms and conditions.
+          example: "Hipoteca a tipo fijo con las mejores condiciones."
         TAE:
           type: number
+          format: double
+          description: Annual Percentage Rate (Tasa Anual Equivalente).
+          example: 2.5
     ErrorResponse:
       type: object
+      description: Standardized error response payload.
       properties:
         timestamp:
           type: string
           format: date-time
-          description: Fecha y hora en la que ocurrió el error.
+          description: Date and time when the error occurred.
+          example: "2023-10-27T10:00:00Z"
         status:
           type: integer
-          description: Código de estado HTTP del error.
+          description: HTTP status code of the error.
+          example: 404
         error:
           type: string
-          description: Nombre descriptivo del error.
+          description: Descriptive name of the error.
+          example: "Not Found"
         message:
           type: string
-          description: Detalle del mensaje de error.
+          description: Detailed error message.
+          example: "Bank with id 1 not found"
         path:
           type: string
-          description: URI donde ocurrió el error.
+          description: URI where the error occurred.
+          example: "/banks/1"
