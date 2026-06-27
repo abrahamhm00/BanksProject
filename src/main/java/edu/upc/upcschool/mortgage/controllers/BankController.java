@@ -5,6 +5,7 @@ import edu.upc.upcschool.mortgage.models.User;
 import edu.upc.upcschool.mortgage.repositories.BankRepository;
 import edu.upc.upcschool.mortgage.security.ApiKeyAuth;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -62,10 +63,24 @@ public class BankController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Bank> update(@PathVariable Integer id, @RequestBody Bank bank) {
+
+        // 1. Identify the caller.
+        ApiKeyAuth auth = (ApiKeyAuth) SecurityContextHolder.getContext().getAuthentication();
+
+        User user = (User) auth.getPrincipal();
+
+        // 2. Identify if the Bank exist
+
         if (bankRepository.existsById(id)) {
-            Bank bankToSave = new Bank(id, bank.name(), bank.bank_code(), bank.url(), bank.ownerId());
-            Bank updatedBank = bankRepository.save(bankToSave);
-            return ResponseEntity.ok(updatedBank);
+
+            // 3. Identify if the authenticated user is the owner of the bank entity.
+            Optional<Bank> originalBank = bankRepository.findById(id);
+            if (originalBank.get().ownerId().equals(user.id())) {
+                Bank bankToSave = new Bank(id, bank.name(), bank.bank_code(), bank.url(), user.id());
+                Bank updatedBank = bankRepository.save(bankToSave);
+                return ResponseEntity.ok(updatedBank);
+            }
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } else {
             return ResponseEntity.notFound().build();
         }
