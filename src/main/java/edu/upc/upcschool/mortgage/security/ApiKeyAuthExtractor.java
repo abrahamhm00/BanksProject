@@ -1,23 +1,29 @@
 package edu.upc.upcschool.mortgage.security;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.beans.factory.annotation.Value;
+import edu.upc.upcschool.mortgage.models.User;
 import org.springframework.security.core.authority.AuthorityUtils;
 
+import edu.upc.upcschool.mortgage.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Optional;
 
 public class ApiKeyAuthExtractor {
 
-    @Value("${application.security.api-key}")
-    private String apiKey;
+    private final UserRepository userRepository;
+
+    public ApiKeyAuthExtractor(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public Optional<Authentication> extract(HttpServletRequest request) {
         String providedKey = request.getHeader("ApiKey");
-        if (providedKey == null || !providedKey.equals(apiKey)) {
+        Optional<User> user = userRepository.findByApiKey(providedKey);
+        if (user.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(new ApiKeyAuth(providedKey, AuthorityUtils.NO_AUTHORITIES));
+        ApiKeyAuth apiKeyAuth = new ApiKeyAuth(user.get(), AuthorityUtils.NO_AUTHORITIES);
+        return Optional.of(apiKeyAuth);
     }
 }

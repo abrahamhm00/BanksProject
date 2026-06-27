@@ -50,7 +50,7 @@ public class BankController {
     @PutMapping("/{id}")
     public ResponseEntity<Bank> update(@PathVariable Integer id, @RequestBody Bank bank) {
         if (bankRepository.existsById(id)) {
-            Bank bankToSave = new Bank(id, bank.name(), bank.bank_code(), bank.url());
+            Bank bankToSave = new Bank(id, bank.name(), bank.bank_code(), bank.url(), bank.ownerId());
             Bank updatedBank = bankRepository.save(bankToSave);
             return ResponseEntity.ok(updatedBank);
         } else {
