@@ -6,13 +6,15 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 import org.springframework.security.core.GrantedAuthority;
 
+import edu.upc.upcschool.mortgage.models.User;
+
 public class ApiKeyAuth extends AbstractAuthenticationToken {
 
-    private final String apiKey;
+    private final User user;
 
-    public ApiKeyAuth(String apiKey, Collection<? extends GrantedAuthority> authorities) {
+    public ApiKeyAuth(User user, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
-        this.apiKey = apiKey;
+        this.user = user;
         setAuthenticated(true);
     }
 
@@ -23,6 +25,6 @@ public class ApiKeyAuth extends AbstractAuthenticationToken {
 
     @Override
     public Object getPrincipal() {
-        return apiKey;
+        return user;
     }
 }
