@@ -88,12 +88,20 @@ public class BankController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        Optional<Bank> bankRepositoryOptional = bankRepository.findById(id);
-        if (bankRepositoryOptional.isPresent()) {
-            bankRepository.delete(bankRepositoryOptional.get());
-            return ResponseEntity.noContent().build();
-        } else {
+        // 1. Identify the caller
+        ApiKeyAuth auth = (ApiKeyAuth) SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+
+        // 2. Identify if the Bank exists
+        if (bankRepository.existsById(id)) {
+            Optional<Bank> originalBank = bankRepository.findById(id);
+            if (originalBank.get().ownerId().equals(user.id())) {
+                bankRepository.delete(originalBank.get());
+                return ResponseEntity.noContent().build();
+            }
             return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.notFound().build();
+
     }
 }
