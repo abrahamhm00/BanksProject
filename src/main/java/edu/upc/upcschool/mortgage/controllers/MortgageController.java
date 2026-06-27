@@ -1,6 +1,10 @@
 package edu.upc.upcschool.mortgage.controllers;
 
 import edu.upc.upcschool.mortgage.models.Mortgage;
+import edu.upc.upcschool.mortgage.models.Bank;
+import edu.upc.upcschool.mortgage.models.User;
+import edu.upc.upcschool.mortgage.security.ApiKeyAuth;
+import org.springframework.security.core.context.SecurityContextHolder;
 import edu.upc.upcschool.mortgage.repositories.BankRepository;
 import edu.upc.upcschool.mortgage.repositories.MortgageRepository;
 import edu.upc.upcschool.mortgage.services.MortgageSimulationService;
@@ -10,6 +14,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.http.ResponseEntity.ok;
 
@@ -57,9 +62,14 @@ public class MortgageController {
             @RequestBody Mortgage newMortgage,
             UriComponentsBuilder ucb) {
 
-        if (!bankRepository.existsById(bankId)) {
+        ApiKeyAuth auth = (ApiKeyAuth) SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+
+        Optional<Bank> bankOptional = bankRepository.findById(bankId);
+        if (bankOptional.isEmpty() || !bankOptional.get().ownerId().equals(user.id())) {
             return ResponseEntity.notFound().build();
         }
+
         Mortgage toSave = new Mortgage(null, bankId, newMortgage.name(), newMortgage.type(), newMortgage.description(),
                 newMortgage.TAE());
         Mortgage saved = mortgageRepository.save(toSave);
@@ -75,6 +85,15 @@ public class MortgageController {
     public ResponseEntity<Mortgage> update(@PathVariable Integer bankId,
             @PathVariable Integer id,
             @RequestBody Mortgage updateMortgage) {
+
+        ApiKeyAuth auth = (ApiKeyAuth) SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+
+        Optional<Bank> bankOptional = bankRepository.findById(bankId);
+        if (bankOptional.isEmpty() || !bankOptional.get().ownerId().equals(user.id())) {
+            return ResponseEntity.notFound().build();
+        }
+
         if (!mortgageRepository.existsByIdAndBankId(id, bankId)) {
             return ResponseEntity.notFound().build();
         }
@@ -86,6 +105,15 @@ public class MortgageController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Mortgage> delete(@PathVariable Integer bankId,
             @PathVariable Integer id) {
+
+        ApiKeyAuth auth = (ApiKeyAuth) SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+
+        Optional<Bank> bankOptional = bankRepository.findById(bankId);
+        if (bankOptional.isEmpty() || !bankOptional.get().ownerId().equals(user.id())) {
+            return ResponseEntity.notFound().build();
+        }
+
         if (!mortgageRepository.existsByIdAndBankId(id, bankId)) {
             return ResponseEntity.notFound().build();
         }
