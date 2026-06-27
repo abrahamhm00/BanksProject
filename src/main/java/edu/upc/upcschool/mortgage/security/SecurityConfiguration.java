@@ -15,9 +15,11 @@ import org.springframework.http.HttpMethod;
 public class SecurityConfiguration {
 
     private final ApiKeyAuthFilter authFilter;
+    private final UnauthorizedHandler unauthorizedHandler;
 
-    public SecurityConfiguration(ApiKeyAuthFilter authFilter) {
+    public SecurityConfiguration(ApiKeyAuthFilter authFilter, UnauthorizedHandler unauthorizedHandler) {
         this.authFilter = authFilter;
+        this.unauthorizedHandler = unauthorizedHandler;
     }
 
     @Bean
@@ -27,6 +29,7 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(AbstractHttpConfigurer::disable)
+                .exceptionHandling(configurer -> configurer.authenticationEntryPoint(unauthorizedHandler))
                 .securityMatcher("/**")
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/banks", "banks/{id}", "banks/{bankId}/mortgages",
