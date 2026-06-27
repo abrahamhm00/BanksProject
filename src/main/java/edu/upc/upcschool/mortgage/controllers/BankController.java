@@ -1,8 +1,12 @@
 package edu.upc.upcschool.mortgage.controllers;
 
 import edu.upc.upcschool.mortgage.models.Bank;
+import edu.upc.upcschool.mortgage.models.User;
 import edu.upc.upcschool.mortgage.repositories.BankRepository;
+import edu.upc.upcschool.mortgage.security.ApiKeyAuth;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -41,7 +45,16 @@ public class BankController {
 
     @PostMapping()
     public ResponseEntity<Bank> create(@RequestBody Bank newBank, UriComponentsBuilder ucb) {
-        Bank savedBank = bankRepository.save(newBank);
+
+        // 1. Identify the caller
+        ApiKeyAuth auth = (ApiKeyAuth) SecurityContextHolder.getContext().getAuthentication();
+        User owner = (User) auth.getPrincipal();
+
+        // 2. Attach the owner to the new fund
+        Bank bankToSave = new Bank(null, newBank.name(), newBank.bank_code(), newBank.url(), owner.id());
+
+        // 3. Save and return 201 Created.
+        Bank savedBank = bankRepository.save(bankToSave);
         // Creation of uri to allocate the correct 201 response into header response.
         URI location = ucb.path("/banks/{id}").buildAndExpand(savedBank.id()).toUri();
         return ResponseEntity.created(location).body(savedBank);
