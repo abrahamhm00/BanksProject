@@ -1,0 +1,139 @@
+/* ============================================================
+   GLOBAL DESIGN SYSTEM — MortgageHub
+   Dark blue-navy theme with emerald accent
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../node_modules/shadcn/dist/tailwind.css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+}
+
+/* ── Dark navy theme (always dark) ── */
+:root {
+    --background: oklch(0.13 0.02 255);
+    --foreground: oklch(0.97 0.01 255);
+    --card: oklch(0.17 0.025 255);
+    --card-foreground: oklch(0.97 0.01 255);
+    --popover: oklch(0.17 0.025 255);
+    --popover-foreground: oklch(0.97 0.01 255);
+    /* Emerald primary */
+    --primary: oklch(0.72 0.18 162);
+    --primary-foreground: oklch(0.13 0.02 255);
+    --secondary: oklch(0.22 0.03 255);
+    --secondary-foreground: oklch(0.97 0.01 255);
+    --muted: oklch(0.22 0.03 255);
+    --muted-foreground: oklch(0.60 0.04 255);
+    --accent: oklch(0.26 0.04 255);
+    --accent-foreground: oklch(0.97 0.01 255);
+    --destructive: oklch(0.65 0.22 25);
+    --border: oklch(1 0 0 / 8%);
+    --input: oklch(1 0 0 / 12%);
+    --ring: oklch(0.72 0.18 162);
+    --chart-1: oklch(0.72 0.18 162);
+    --chart-2: oklch(0.65 0.15 210);
+    --chart-3: oklch(0.60 0.13 285);
+    --chart-4: oklch(0.70 0.15 55);
+    --chart-5: oklch(0.65 0.22 25);
+    --radius: 0.75rem;
+    --sidebar: oklch(0.17 0.025 255);
+    --sidebar-foreground: oklch(0.97 0.01 255);
+    --sidebar-primary: oklch(0.72 0.18 162);
+    --sidebar-primary-foreground: oklch(0.13 0.02 255);
+    --sidebar-accent: oklch(0.22 0.03 255);
+    --sidebar-accent-foreground: oklch(0.97 0.01 255);
+    --sidebar-border: oklch(1 0 0 / 8%);
+    --sidebar-ring: oklch(0.72 0.18 162);
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+    body {
+        @apply bg-background text-foreground;
+        min-height: 100dvh;
+    }
+    html {
+        @apply font-sans;
+    }
+}
+
+/* ── Animations ── */
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.4s ease both; }
+.animate-slide-up { animation: slide-up 0.5s ease both; }
+.animate-delay-100 { animation-delay: 0.1s; }
+.animate-delay-200 { animation-delay: 0.2s; }
+.animate-delay-300 { animation-delay: 0.3s; }
+
+/* ── Spinner ── */
+.spinner {
+    width: 40px; height: 40px;
+    border: 3px solid oklch(1 0 0 / 15%);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 60px auto;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Heart favourite animation ── */
+@keyframes heart-pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+.heart-pop { animation: heart-pop 0.3s ease; }
