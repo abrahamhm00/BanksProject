@@ -9,6 +9,9 @@ import edu.upc.upcschool.mortgage.repositories.BankRepository;
 import edu.upc.upcschool.mortgage.repositories.MortgageRepository;
 import edu.upc.upcschool.mortgage.services.MortgageSimulationService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -25,6 +28,7 @@ public class MortgageController {
     private final MortgageRepository mortgageRepository;
     private final BankRepository bankRepository;
     private final MortgageSimulationService mortgageSimulationService;
+
     /**
      * Initializing Mortgage Controller via class Constructor, preventing null
      * access
@@ -66,8 +70,11 @@ public class MortgageController {
         User user = (User) auth.getPrincipal();
 
         Optional<Bank> bankOptional = bankRepository.findById(bankId);
-        if (bankOptional.isEmpty() || !bankOptional.get().ownerId().equals(user.id())) {
+        if (bankOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+        if (!bankOptional.get().ownerId().equals(user.id())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         Mortgage toSave = new Mortgage(null, bankId, newMortgage.name(), newMortgage.type(), newMortgage.description(),
@@ -90,8 +97,11 @@ public class MortgageController {
         User user = (User) auth.getPrincipal();
 
         Optional<Bank> bankOptional = bankRepository.findById(bankId);
-        if (bankOptional.isEmpty() || !bankOptional.get().ownerId().equals(user.id())) {
+        if (bankOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+        if (!bankOptional.get().ownerId().equals(user.id())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         if (!mortgageRepository.existsByIdAndBankId(id, bankId)) {
@@ -110,31 +120,58 @@ public class MortgageController {
         User user = (User) auth.getPrincipal();
 
         Optional<Bank> bankOptional = bankRepository.findById(bankId);
-        if (bankOptional.isEmpty() || !bankOptional.get().ownerId().equals(user.id())) {
+        if (bankOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+        if (!bankOptional.get().ownerId().equals(user.id())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         if (!mortgageRepository.existsByIdAndBankId(id, bankId)) {
             return ResponseEntity.notFound().build();
         }
-        mortgageRepository.deleteByIdAndBankId(id, bankId);
+        mortgageRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
-     @GetMapping("/{id}/simulate")
+    @GetMapping("/{id}/simulate")
     public ResponseEntity<?> simulate(@PathVariable Integer bankId,
-                                      @PathVariable Integer id,
-                                      @RequestParam double principal,
-                                      @RequestParam int years){
+            @PathVariable Integer id,
+            @RequestParam double principal,
+            @RequestParam int years) {
 
-        try{
+        try {
             double fee = mortgageSimulationService.simulate(bankId, id, principal, years);
             return ResponseEntity.ok(fee);
-        } catch (java.util.NoSuchElementException e){
+        } catch (java.util.NoSuchElementException e) {
             return ResponseEntity.notFound().build();
-        } catch (java.lang.IllegalArgumentException e){
+        } catch (java.lang.IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e){
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("An error ocurred: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/simulate/pdf")
+    public ResponseEntity<?> simulatePdf(@PathVariable Integer bankId,
+            @PathVariable Integer id,
+            @RequestParam double principal,
+            @RequestParam int years) {
+
+        try {
+            byte[] pdfBytes = mortgageSimulationService.generateAmortizationPdf(bankId, id, principal, years);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "cuadro_amortizacion_" + id + ".pdf");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+
+        } catch (java.util.NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        } catch (java.lang.IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
             return ResponseEntity.internalServerError().body("An error ocurred: " + e.getMessage());
         }
     }

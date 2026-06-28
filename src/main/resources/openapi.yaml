@@ -1,23 +1,43 @@
 openapi: 3.1.0
 info:
   title: Mortgage Application API
-  description: Complete API for managing banking institutions and their associated mortgage products, including a simulation engine to calculate mortgage fees.
+  description: |
+    REST API for managing banking institutions and their associated mortgage products.
+    
+    ## Authentication
+    All write operations (POST, PUT, DELETE) require an **API Key** passed via the `ApiKey` request header.
+    Read operations (GET) are publicly accessible.
+    
+    ## Authorization
+    Banks and mortgages are **owner-scoped**: only the user who created a bank can modify or delete it,
+    and only that same user can create, update, or delete mortgages within that bank.
   version: v1.0.0
 servers:
   - url: http://localhost:8080
     description: Local development server
+
 tags:
-  - name: bank-controller
-    description: Operations related to creating, retrieving, updating, and deleting Banks.
-  - name: mortgage-controller
-    description: Operations related to managing Mortgages and running financial Simulations.
+  - name: Banks
+    description: Operations for creating, retrieving, updating, and deleting banking institutions.
+  - name: Mortgages
+    description: Operations for managing mortgage products and running financial simulations.
+  - name: Favourites
+    description: Toggle favourite on a mortgage and view the public ranking by popularity.
+
+security: []
+
 paths:
+
+  # ─────────────────────────────────────────────
+  # BANKS
+  # ─────────────────────────────────────────────
+
   /banks:
     get:
       tags:
-        - bank-controller
-      summary: Retrieve all banks
-      description: Fetches a complete list of all registered banks in the system.
+        - Banks
+      summary: List all banks
+      description: Returns a complete list of all registered banks in the system. No authentication required.
       operationId: findAllBanks
       responses:
         "200":
@@ -28,419 +48,593 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Bank"
+              example:
+                - id: 1
+                  name: "First National Bank"
+                  bank_code: "FNB001"
+                  url: "https://www.firstnationalbank.com"
+                  ownerId: 1
+                - id: 2
+                  name: "City Savings Bank"
+                  bank_code: "CSB002"
+                  url: "https://www.citysavings.com"
+                  ownerId: 2
+
     post:
       tags:
-        - bank-controller
+        - Banks
       summary: Create a new bank
-      description: Registers a new bank entry in the system with the provided details.
+      description: |
+        Registers a new bank in the system. The authenticated user (identified by the `ApiKey` header)
+        is automatically set as the owner of the created bank.
       operationId: createBank
+      security:
+        - ApiKeyAuth: []
       requestBody:
-        description: Bank object payload containing necessary details for creation.
+        description: Bank details. The `id` and `ownerId` fields are ignored — they are assigned automatically by the server.
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Bank"
-        required: true
+              $ref: "#/components/schemas/BankRequest"
+            example:
+              name: "First National Bank"
+              bank_code: "FNB001"
+              url: "https://www.firstnationalbank.com"
       responses:
         "201":
-          description: Bank created successfully. Returns the created object and its location URI.
+          description: Bank created successfully. The `Location` header contains the URI of the new resource.
           headers:
             Location:
+              description: URI of the newly created bank.
               schema:
                 type: string
-              description: URI of the newly created bank.
+                example: "http://localhost:8080/banks/3"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Bank"
-        "400":
-          description: Bad Request. Invalid input data or malformed JSON.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                id: 3
+                name: "First National Bank"
+                bank_code: "FNB001"
+                url: "https://www.firstnationalbank.com"
+                ownerId: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /banks/{id}:
     get:
       tags:
-        - bank-controller
-      summary: Get bank by ID
-      description: Retrieves the detailed information of a specific bank using its unique identifier.
+        - Banks
+      summary: Get a bank by ID
+      description: Retrieves the details of a specific bank by its unique identifier. No authentication required.
       operationId: findBankById
       parameters:
-        - name: id
-          in: path
-          description: Unique identifier of the bank.
-          required: true
-          schema:
-            type: integer
-            format: int32
+        - $ref: "#/components/parameters/bankId"
       responses:
         "200":
-          description: Bank found and successfully retrieved.
+          description: Bank found and returned successfully.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Bank"
-        "400":
-          description: Bad request. The provided ID parameter is invalid.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                id: 1
+                name: "First National Bank"
+                bank_code: "FNB001"
+                url: "https://www.firstnationalbank.com"
+                ownerId: 1
         "404":
-          description: Not Found. The bank with the specified ID does not exist.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotFound"
+
     put:
       tags:
-        - bank-controller
+        - Banks
       summary: Update an existing bank
-      description: Updates the properties of an existing bank based on the provided ID.
+      description: |
+        Updates the details of a bank. Requires authentication and **ownership**:
+        only the user who originally created the bank can update it.
       operationId: updateBank
+      security:
+        - ApiKeyAuth: []
       parameters:
-        - name: id
-          in: path
-          description: Unique identifier of the bank to update.
-          required: true
-          schema:
-            type: integer
-            format: int32
+        - $ref: "#/components/parameters/bankId"
       requestBody:
-        description: Updated bank object payload.
+        description: Updated bank payload. The `id` and `ownerId` fields are ignored.
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Bank"
-        required: true
+              $ref: "#/components/schemas/BankRequest"
+            example:
+              name: "First National Bank (Updated)"
+              bank_code: "FNB001"
+              url: "https://www.firstnationalbank.com/new"
       responses:
         "200":
-          description: Bank successfully updated.
+          description: Bank updated successfully.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Bank"
-        "400":
-          description: Bad Request. Invalid input data or malformed JSON.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
-          description: Not Found. Bank not found to update.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotFound"
+
     delete:
       tags:
-        - bank-controller
+        - Banks
       summary: Delete a bank
-      description: Removes a specific bank from the system by its ID.
+      description: |
+        Permanently removes a bank from the system. Requires authentication and **ownership**:
+        only the user who originally created the bank can delete it.
       operationId: deleteBank
+      security:
+        - ApiKeyAuth: []
       parameters:
-        - name: id
-          in: path
-          description: Unique identifier of the bank to delete.
-          required: true
-          schema:
-            type: integer
-            format: int32
+        - $ref: "#/components/parameters/bankId"
       responses:
         "204":
           description: Bank successfully deleted. No content is returned.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
-          description: Not Found. Bank not found to delete.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotFound"
+
+  # ─────────────────────────────────────────────
+  # MORTGAGES
+  # ─────────────────────────────────────────────
 
   /banks/{bankId}/mortgages:
     get:
       tags:
-        - mortgage-controller
-      summary: Get all mortgages for a bank
-      description: Retrieves a comprehensive list of all mortgages associated with a specific bank.
+        - Mortgages
+      summary: List all mortgages for a bank
+      description: Returns all mortgage products associated with a specific bank. No authentication required.
       operationId: findAllMortgagesByBank
       parameters:
-        - name: bankId
-          in: path
-          description: Unique identifier of the bank.
-          required: true
-          schema:
-            type: integer
-            format: int32
+        - $ref: "#/components/parameters/bankIdPath"
       responses:
         "200":
-          description: Successfully retrieved the list of mortgages for the bank.
+          description: Successfully retrieved the list of mortgages.
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/Mortgage"
-        "400":
-          description: Bad Request. Invalid bank ID supplied.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                - id: 101
+                  bankId: 1
+                  name: "30-Year Fixed Rate Mortgage"
+                  type: "FIXED"
+                  description: "A stable fixed-rate mortgage with consistent monthly payments over 30 years."
+                  TAE: 3.25
+                - id: 102
+                  bankId: 1
+                  name: "5/1 Adjustable Rate Mortgage"
+                  type: "VARIABLE"
+                  description: "Fixed for 5 years then adjusts annually based on market index."
+                  TAE: 2.10
         "404":
-          description: Not Found. The specified bank does not exist.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotFound"
+
     post:
       tags:
-        - mortgage-controller
+        - Mortgages
       summary: Create a new mortgage for a bank
-      description: Adds a new mortgage product associated with the specified bank.
+      description: |
+        Adds a new mortgage product to a specific bank. Requires authentication and **ownership**:
+        only the owner of the bank can add mortgages to it.
       operationId: createMortgage
+      security:
+        - ApiKeyAuth: []
       parameters:
-        - name: bankId
-          in: path
-          description: Unique identifier of the bank.
-          required: true
-          schema:
-            type: integer
-            format: int32
+        - $ref: "#/components/parameters/bankIdPath"
       requestBody:
-        description: Mortgage object payload to be created.
+        description: Mortgage details. The `id` and `bankId` fields are ignored — they are assigned automatically by the server.
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Mortgage"
-        required: true
+              $ref: "#/components/schemas/MortgageRequest"
+            example:
+              name: "30-Year Fixed Rate Mortgage"
+              type: "FIXED"
+              description: "A stable fixed-rate mortgage with consistent monthly payments over 30 years."
+              TAE: 3.25
       responses:
         "201":
-          description: Mortgage created successfully. Returns the created object and its location URI.
+          description: Mortgage created successfully. The `Location` header contains the URI of the new resource.
           headers:
             Location:
+              description: URI of the newly created mortgage collection for this bank.
               schema:
                 type: string
-              description: URI of the newly created mortgage.
+                example: "http://localhost:8080/banks/1/mortgages"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Mortgage"
-        "400":
-          description: Bad Request. Invalid input data or malformed JSON.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                id: 103
+                bankId: 1
+                name: "30-Year Fixed Rate Mortgage"
+                type: "FIXED"
+                description: "A stable fixed-rate mortgage with consistent monthly payments over 30 years."
+                TAE: 3.25
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
-          description: Not Found. The specified bank does not exist.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotFound"
 
   /banks/{bankId}/mortgages/{id}:
     get:
       tags:
-        - mortgage-controller
+        - Mortgages
       summary: Get a specific mortgage
-      description: Retrieves the details of a specific mortgage associated with a specific bank.
+      description: Retrieves the details of a single mortgage within a given bank. No authentication required.
       operationId: findMortgageById
       parameters:
-        - name: bankId
-          in: path
-          description: Unique identifier of the bank.
-          required: true
-          schema:
-            type: integer
-            format: int32
-        - name: id
-          in: path
-          description: Unique identifier of the mortgage.
-          required: true
-          schema:
-            type: integer
-            format: int32
+        - $ref: "#/components/parameters/bankIdPath"
+        - $ref: "#/components/parameters/mortgageId"
       responses:
         "200":
-          description: Mortgage found and successfully retrieved.
+          description: Mortgage found and returned successfully.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Mortgage"
-        "400":
-          description: Bad Request. Invalid path parameters supplied.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                id: 101
+                bankId: 1
+                name: "30-Year Fixed Rate Mortgage"
+                type: "FIXED"
+                description: "A stable fixed-rate mortgage with consistent monthly payments over 30 years."
+                TAE: 3.25
         "404":
-          description: Not Found. Bank or mortgage not found.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotFound"
+
     put:
       tags:
-        - mortgage-controller
+        - Mortgages
       summary: Update a specific mortgage
-      description: Updates the details of an existing mortgage for a specific bank.
+      description: |
+        Updates the details of an existing mortgage. Requires authentication and **ownership**:
+        only the owner of the parent bank can update its mortgages.
       operationId: updateMortgage
+      security:
+        - ApiKeyAuth: []
       parameters:
-        - name: bankId
-          in: path
-          description: Unique identifier of the bank.
-          required: true
-          schema:
-            type: integer
-            format: int32
-        - name: id
-          in: path
-          description: Unique identifier of the mortgage to update.
-          required: true
-          schema:
-            type: integer
-            format: int32
+        - $ref: "#/components/parameters/bankIdPath"
+        - $ref: "#/components/parameters/mortgageId"
       requestBody:
-        description: Updated mortgage object payload.
+        description: Updated mortgage payload. The `id` and `bankId` fields are ignored.
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Mortgage"
-        required: true
+              $ref: "#/components/schemas/MortgageRequest"
+            example:
+              name: "30-Year Fixed Rate Mortgage (Updated)"
+              type: "FIXED"
+              description: "Updated terms with improved rate."
+              TAE: 2.99
       responses:
         "200":
-          description: Mortgage successfully updated.
+          description: Mortgage updated successfully.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Mortgage"
-        "400":
-          description: Bad Request. Invalid input data or malformed JSON.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
-          description: Not Found. Bank or mortgage not found to update.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotFound"
+
     delete:
       tags:
-        - mortgage-controller
+        - Mortgages
       summary: Delete a specific mortgage
-      description: Deletes a specific mortgage from a specific bank.
+      description: |
+        Permanently removes a mortgage from a bank. Requires authentication and **ownership**:
+        only the owner of the parent bank can delete its mortgages.
       operationId: deleteMortgage
+      security:
+        - ApiKeyAuth: []
       parameters:
-        - name: bankId
-          in: path
-          description: Unique identifier of the bank.
-          required: true
-          schema:
-            type: integer
-            format: int32
-        - name: id
-          in: path
-          description: Unique identifier of the mortgage to delete.
-          required: true
-          schema:
-            type: integer
-            format: int32
+        - $ref: "#/components/parameters/bankIdPath"
+        - $ref: "#/components/parameters/mortgageId"
       responses:
         "204":
           description: Mortgage successfully deleted. No content is returned.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
-          description: Not Found. Bank or mortgage not found to delete.
+          $ref: "#/components/responses/NotFound"
+
+  /banks/{bankId}/mortgages/{id}/favorite:
+    post:
+      tags:
+        - Favourites
+      summary: Toggle favourite on a mortgage
+      description: |
+        Adds or removes the authenticated user's favourite mark on a mortgage.
+        The operation is **idempotent as a toggle**: calling it twice returns the mortgage to its original state.
+        Returns the new favourite state and the updated total count.
+      operationId: toggleFavorite
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/bankIdPath"
+        - $ref: "#/components/parameters/mortgageId"
+      responses:
+        "200":
+          description: Toggle applied successfully. Returns the new state and updated total count.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/FavoriteToggleResponse"
+              examples:
+                added:
+                  summary: Mortgage was just favourited
+                  value:
+                    mortgageId: 1
+                    favorited: true
+                    totalFavorites: 3
+                removed:
+                  summary: Favourite was just removed
+                  value:
+                    mortgageId: 1
+                    favorited: false
+                    totalFavorites: 2
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /mortgages/ranking:
+    get:
+      tags:
+        - Favourites
+      summary: Get mortgage ranking by favourites
+      description: |
+        Returns all mortgages in the system sorted by their total favourite count in **descending order**.
+        This endpoint is public — no authentication required.
+      operationId: getMortgageRanking
+      responses:
+        "200":
+          description: Ranking retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MortgageRankingEntry"
+              example:
+                - id: 1
+                  bankId: 1
+                  name: "Fixed Mortgage Caixabank"
+                  type: "FIXED"
+                  description: "Fixed-rate mortgage with bonus conditions"
+                  TAE: 2.95
+                  favoriteCount: 2
+                - id: 4
+                  bankId: 4
+                  name: "Youth Mortgage Santander"
+                  type: "VARIABLE"
+                  description: "Special mortgage for people under 35"
+                  TAE: 2.80
+                  favoriteCount: 2
 
   /banks/{bankId}/mortgages/{id}/simulate:
     get:
       tags:
-        - mortgage-controller
-      summary: Simulate a mortgage fee
-      description: Simulates a mortgage based on the principal amount and duration in years to calculate the periodic fee.
+        - Mortgages
+      summary: Simulate a mortgage monthly fee
+      description: |
+        Runs a financial simulation for a given mortgage using the provided principal and duration.
+        Returns the calculated periodic (monthly) fee. No authentication required.
+        
+        The simulation uses the standard French amortization formula.
       operationId: simulateMortgage
       parameters:
-        - name: bankId
-          in: path
-          description: Unique identifier of the bank.
-          required: true
-          schema:
-            type: integer
-            format: int32
-        - name: id
-          in: path
-          description: Unique identifier of the mortgage.
-          required: true
-          schema:
-            type: integer
-            format: int32
+        - $ref: "#/components/parameters/bankIdPath"
+        - $ref: "#/components/parameters/mortgageId"
         - name: principal
           in: query
-          description: The principal amount of the mortgage loan to simulate.
+          description: The principal loan amount to simulate (must be greater than 0).
           required: true
           schema:
             type: number
             format: double
+            exclusiveMinimum: 0
+          example: 200000.00
         - name: years
           in: query
-          description: The duration of the mortgage in years.
+          description: The loan duration in years (must be greater than 0).
           required: true
           schema:
             type: integer
             format: int32
+            exclusiveMinimum: 0
+          example: 30
       responses:
         "200":
-          description: Simulation successful. Returns the calculated fee.
+          description: Simulation successful. Returns the calculated monthly fee.
           content:
             application/json:
               schema:
                 type: number
                 format: double
+              example: 869.35
         "400":
-          description: Bad Request. Invalid input parameters (e.g., negative principal or years).
+          description: Bad Request. Invalid parameters (e.g., negative principal or zero years).
           content:
             text/plain:
               schema:
                 type: string
+              example: "Principal must be greater than zero."
         "404":
-          description: Not Found. Bank or mortgage not found.
+          $ref: "#/components/responses/NotFound"
         "500":
-          description: Internal Server Error. An unexpected error occurred during simulation.
+          description: Internal Server Error. An unexpected error occurred during the simulation.
           content:
             text/plain:
               schema:
                 type: string
+              example: "An error occurred: division by zero"
+
+# ─────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────
 
 components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: ApiKey
+      description: |
+        API key used to authenticate and identify the caller.
+        Pass the key in the `ApiKey` HTTP request header.
+        Example: `ApiKey: key-alice-1234`
+
+  parameters:
+    bankId:
+      name: id
+      in: path
+      description: Unique numeric identifier of the bank.
+      required: true
+      schema:
+        type: integer
+        format: int32
+      example: 1
+
+    bankIdPath:
+      name: bankId
+      in: path
+      description: Unique numeric identifier of the bank.
+      required: true
+      schema:
+        type: integer
+        format: int32
+      example: 1
+
+    mortgageId:
+      name: id
+      in: path
+      description: Unique numeric identifier of the mortgage.
+      required: true
+      schema:
+        type: integer
+        format: int32
+      example: 101
+
+  responses:
+    Unauthorized:
+      description: Unauthorized. No valid `ApiKey` header was provided.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            timestamp: "2024-06-28T17:00:00Z"
+            status: 401
+            error: "Unauthorized"
+            message: "Missing or invalid API key."
+            path: "/banks"
+
+    Forbidden:
+      description: Forbidden. The authenticated user does not own the requested resource.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            timestamp: "2024-06-28T17:00:00Z"
+            status: 403
+            error: "Forbidden"
+            message: "You do not have permission to modify this resource."
+            path: "/banks/1"
+
+    NotFound:
+      description: Not Found. The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            timestamp: "2024-06-28T17:00:00Z"
+            status: 404
+            error: "Not Found"
+            message: "The requested resource was not found."
+            path: "/banks/999"
+
   schemas:
     Bank:
       type: object
-      description: Represents a banking institution.
+      description: Represents a banking institution registered in the system.
       properties:
         id:
           type: integer
           format: int32
-          description: Unique identifier of the bank.
+          description: Unique auto-generated identifier of the bank.
+          readOnly: true
           example: 1
         name:
           type: string
-          description: Name of the bank.
-          example: "Banco Santander"
+          description: Full legal name of the banking institution.
+          example: "First National Bank"
         bank_code:
           type: string
-          description: Official code of the bank.
-          example: "0049"
+          description: Official bank identification code.
+          example: "FNB001"
         url:
           type: string
-          description: Website URL of the bank.
-          example: "https://www.bancosantander.es"
+          description: Official website URL of the bank.
+          example: "https://www.firstnationalbank.com"
+        ownerId:
+          type: integer
+          format: int32
+          description: Identifier of the user who owns and manages this bank record.
+          readOnly: true
+          example: 1
+
+    BankRequest:
+      type: object
+      description: Payload used to create or update a bank. Owner is derived from the authenticated API key.
+      required:
+        - name
+        - bank_code
+        - url
+      properties:
+        name:
+          type: string
+          description: Full legal name of the banking institution.
+          example: "First National Bank"
+        bank_code:
+          type: string
+          description: Official bank identification code.
+          example: "FNB001"
+        url:
+          type: string
+          description: Official website URL of the bank.
+          example: "https://www.firstnationalbank.com"
+
     Mortgage:
       type: object
       description: Represents a mortgage product offered by a bank.
@@ -448,8 +642,94 @@ components:
         id:
           type: integer
           format: int32
-          description: Unique identifier of the mortgage.
+          description: Unique auto-generated identifier of the mortgage.
+          readOnly: true
           example: 101
+        bankId:
+          type: integer
+          format: int32
+          description: Identifier of the bank that offers this mortgage.
+          readOnly: true
+          example: 1
+        name:
+          type: string
+          description: Commercial name of the mortgage product.
+          example: "30-Year Fixed Rate Mortgage"
+        type:
+          type: string
+          description: Mortgage type. Accepted values are `FIXED` or `VARIABLE`.
+          enum:
+            - FIXED
+            - VARIABLE
+          example: "FIXED"
+        description:
+          type: string
+          description: Detailed description of the mortgage terms and conditions.
+          example: "A stable fixed-rate mortgage with consistent monthly payments over 30 years."
+        TAE:
+          type: number
+          format: decimal
+          description: Annual Percentage Rate (APR) expressed as a percentage (e.g., 3.25 means 3.25%).
+          example: 3.25
+
+    MortgageRequest:
+      type: object
+      description: Payload used to create or update a mortgage. The bank is derived from the URL path.
+      required:
+        - name
+        - type
+        - description
+        - TAE
+      properties:
+        name:
+          type: string
+          description: Commercial name of the mortgage product.
+          example: "30-Year Fixed Rate Mortgage"
+        type:
+          type: string
+          description: Mortgage type. Accepted values are `FIXED` or `VARIABLE`.
+          enum:
+            - FIXED
+            - VARIABLE
+          example: "FIXED"
+        description:
+          type: string
+          description: Detailed description of the mortgage terms and conditions.
+          example: "A stable fixed-rate mortgage with consistent monthly payments over 30 years."
+        TAE:
+          type: number
+          format: decimal
+          description: Annual Percentage Rate (APR) expressed as a percentage (e.g., 3.25 means 3.25%).
+          example: 3.25
+
+    FavoriteToggleResponse:
+      type: object
+      description: Response body returned after toggling a favourite. Reflects the new state.
+      properties:
+        mortgageId:
+          type: integer
+          format: int32
+          description: Identifier of the mortgage that was toggled.
+          example: 1
+        favorited:
+          type: boolean
+          description: "`true` if the mortgage is now favourited by the caller, `false` if it was removed."
+          example: true
+        totalFavorites:
+          type: integer
+          format: int64
+          description: Updated total number of users who have favourited this mortgage.
+          example: 3
+
+    MortgageRankingEntry:
+      type: object
+      description: A mortgage enriched with its total favourite count, used in the ranking endpoint.
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: Unique identifier of the mortgage.
+          example: 1
         bankId:
           type: integer
           format: int32
@@ -457,43 +737,50 @@ components:
           example: 1
         name:
           type: string
-          description: Name of the mortgage product.
-          example: "Hipoteca Fija"
+          description: Commercial name of the mortgage product.
+          example: "Fixed Mortgage Caixabank"
         type:
           type: string
-          description: Type of the mortgage (e.g., Fixed, Variable).
+          enum: [FIXED, VARIABLE]
+          description: Mortgage type.
           example: "FIXED"
         description:
           type: string
-          description: Detailed description of the mortgage terms and conditions.
-          example: "Hipoteca a tipo fijo con las mejores condiciones."
+          description: Detailed description of the mortgage terms.
+          example: "Fixed-rate mortgage with bonus conditions"
         TAE:
           type: number
-          format: double
-          description: Annual Percentage Rate (Tasa Anual Equivalente).
-          example: 2.5
+          format: decimal
+          description: Annual Percentage Rate (APR) as a percentage.
+          example: 2.95
+        favoriteCount:
+          type: integer
+          format: int64
+          description: Total number of users who have favourited this mortgage. Used for ranking order.
+          example: 2
+
     ErrorResponse:
       type: object
-      description: Standardized error response payload.
+      description: Standardized error response body returned on all error status codes.
       properties:
         timestamp:
           type: string
           format: date-time
-          description: Date and time when the error occurred.
-          example: "2023-10-27T10:00:00Z"
+          description: ISO 8601 date-time when the error occurred.
+          example: "2024-06-28T17:00:00Z"
         status:
           type: integer
-          description: HTTP status code of the error.
+          description: HTTP status code.
           example: 404
         error:
           type: string
-          description: Descriptive name of the error.
+          description: Short description of the HTTP status.
           example: "Not Found"
         message:
           type: string
-          description: Detailed error message.
-          example: "Bank with id 1 not found"
+          description: Human-readable explanation of the error.
+          example: "Bank with id 99 not found."
         path:
           type: string
-          description: URI where the error occurred.
-          example: "/banks/1"
+          description: Request URI that triggered the error.
+          example: "/banks/99"
