@@ -7,8 +7,10 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import edu.upc.upcschool.mortgage.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.stereotype.Component;
 import java.util.Optional;
 
+@Component
 public class ApiKeyAuthExtractor {
 
     private final UserRepository userRepository;

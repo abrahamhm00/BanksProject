@@ -32,8 +32,9 @@ public class SecurityConfiguration {
                 .exceptionHandling(configurer -> configurer.authenticationEntryPoint(unauthorizedHandler))
                 .securityMatcher("/**")
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/banks", "banks/{id}", "banks/{bankId}/mortgages",
-                                "banks/{bankId}/mortgages/{id}", "banks/{bankId}/mortgages/{id}/simulate")
+                        .requestMatchers(HttpMethod.GET, "/banks", "/banks/{id}", "/banks/{bankId}/mortgages",
+                                "/banks/{bankId}/mortgages/{id}", "/banks/{bankId}/mortgages/{id}/simulate",
+                                "/mortgages/ranking")
                         .permitAll()
                         .requestMatchers(
                                 HttpMethod.POST, "/banks", "/banks/{bankId}/mortgages")
