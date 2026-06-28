@@ -497,6 +497,56 @@ paths:
                 type: string
               example: "An error occurred: division by zero"
 
+  /banks/{bankId}/mortgages/{id}/simulate/pdf:
+    get:
+      tags:
+        - Mortgages
+      summary: Download amortization schedule as PDF
+      description: |
+        Runs a financial simulation for a given mortgage and generates a full month-by-month
+        amortization schedule (using the French system). The result is returned as a binary PDF file.
+        Requires authentication via the `ApiKey` header.
+      operationId: simulateMortgagePdf
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: "#/components/parameters/bankIdPath"
+        - $ref: "#/components/parameters/mortgageId"
+        - name: principal
+          in: query
+          description: The principal loan amount to simulate (must be greater than 0).
+          required: true
+          schema:
+            type: number
+            format: double
+            exclusiveMinimum: 0
+          example: 200000.00
+        - name: years
+          in: query
+          description: The loan duration in years (must be greater than 0).
+          required: true
+          schema:
+            type: integer
+            format: int32
+            exclusiveMinimum: 0
+          example: 30
+      responses:
+        "200":
+          description: PDF generated successfully.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Bad Request. Invalid parameters.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          description: Internal Server Error. Failed to generate PDF.
+
 # ─────────────────────────────────────────────
 # COMPONENTS
 # ─────────────────────────────────────────────
