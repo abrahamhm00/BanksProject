@@ -34,7 +34,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/banks", "/banks/{id}", "/banks/{bankId}/mortgages",
                                 "/banks/{bankId}/mortgages/{id}", "/banks/{bankId}/mortgages/{id}/simulate",
-                                "/mortgages/ranking")
+                                "/mortgages/ranking", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/openapi.yaml")
                         .permitAll()
                         .requestMatchers(
                                 HttpMethod.POST, "/banks", "/banks/{bankId}/mortgages")
