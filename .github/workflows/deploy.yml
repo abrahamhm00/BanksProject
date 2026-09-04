@@ -1,0 +1,15 @@
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Download source code
+        uses: actions/checkout@v4
+
+      - name: Build and start containers
+        run: |
+          docker compose -up -d --build
+
+      - name: Clean oprhan images
+        run: |
+          docker image prune -f
