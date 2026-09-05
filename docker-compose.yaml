@@ -20,7 +20,7 @@ services:
       - db
     ports:
       - "8080:8080"
-    enviroment:
+    environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/banks_db
       SPRING_DATASOURCE_NAME: bank_user
       SPRING_DATASOURCE_PASSWORD: bank_password
