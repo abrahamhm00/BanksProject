@@ -3,7 +3,7 @@ services:
     image: postgres16-alpine
     container_name: banksproject-db
     restart: always
-    enviroment:
+    environment:
       POSTGRES_DB: banks_db
       POSTGRES_USER: bank_user
       POSTGRES_PASSWORD: bank_password
