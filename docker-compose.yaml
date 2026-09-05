@@ -1,43 +1,40 @@
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: banksproject-db
-    restart: always
-    environment:
-      POSTGRES_DB: banks_db
-      POSTGRES_USER: bank_user
-      POSTGRES_PASSWORD: bank_password
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    networks:
-      - app-network
-
   backend:
-    build: .   # O ./backend si está separado
+    build: .
     container_name: banksproject-app
     restart: always
-    depends_on:
-      - db
-    environment:
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://db:5432/banks_db"
-      SPRING_DATASOURCE_USERNAME: "bank_user"
-      SPRING_DATASOURCE_PASSWORD: "bank_password"
+    ports:
+      - "8080:8080"
     networks:
       - app-network
 
   frontend:
-    build: ./frontend   # Ruta a la carpeta de tu Vite/React
+    build: ./frontend
     container_name: banksproject-frontend
     restart: always
     depends_on:
       - backend
     ports:
-      - "3000:80"       # Mapea el puerto 3000 de tu servidor al 80 de Nginx
+      - "3000:80"
     networks:
       - app-network
 
-volumes:
-  db_data:
+# Descomenta esto si en el futuro quieres migrar de H2 a Postgres:
+#  db:
+#    image: postgres:16-alpine
+#    container_name: banksproject-db
+#    restart: always
+#    environment:
+#      POSTGRES_DB: banks_db
+#      POSTGRES_USER: bank_user
+#      POSTGRES_PASSWORD: bank_password
+#    volumes:
+#      - db_data:/var/lib/postgresql/data
+#    networks:
+#      - app-network
+
+# volumes:
+#   db_data:
 
 networks:
   app-network:
