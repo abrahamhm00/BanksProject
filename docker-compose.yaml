@@ -15,7 +15,8 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:80"
+      #Ahora solo escucha des del puerto 3000 del propio servidor, es decir, el routing del nginx qué expone la web
+      - "127.0.0.1:3000:80"
     networks:
       - app-network
 
